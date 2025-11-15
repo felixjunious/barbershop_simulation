@@ -3,24 +3,32 @@ from customer import Customer
 from haircut import Haircut
 from order import Order
 import random
-import time
+from barber import Barber
+from threading import Lock
 
 TIME_DESCALE = 4
 
 order_queue = deque()
+queue_lock = Lock()
 
 def add_order(order):
-    order_queue.appendleft(order)
+    with queue_lock:
+        order_queue.appendleft(order)
 
-def serve_order():
-    order = order_queue.pop()
-    process_order(order)
-    return order
+def show_order(order_deque):
+    """
+    Visualize orders in the console using ASCII bars.
+    """
+    SCALE = 1  # 1 minute = 1 '#'. Adjust if bars get too long.
 
-def process_order(order):
-    print(f"Serving {order.customer} ({order.haircut.name}, {order.duration} min)")
-    time.sleep(order.duration / TIME_DESCALE)
-    print(f"Finished {order.customer}")
+    if order_deque:
+        for order in order_deque:
+            bar = "#" * int(order.duration * SCALE)
+            print(f"{order.customer.name:10} | {order.haircut:12} | {bar} ({order.duration}m)")
+    else:
+        print("Queue Empty")
+
+    print()
 
 
 customers = [Customer(name) for name in ["Alice", "Bob", "Charlie", "Diana", "Ethan"]]
@@ -30,13 +38,14 @@ for cust in customers:
     order = Order(cust, haircut)
     add_order(order)
 
+print("Initial order :")
+show_order(order_queue)
 
-print("Initial queue:")
-print(order_queue, "\n")
+barbers = [Barber(name, order_queue, queue_lock) for name in ["Barber-1", "Barber-2"]]  # e.g., 2 barbers
+for b in barbers:
+    b.start()
 
+for b in barbers:
+    b.join()
 
-while order_queue:
-    order = serve_order()
-    process_order(order)
-
-print("Queue empty:", order_queue)
+show_order(order_queue)
