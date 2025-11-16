@@ -2,6 +2,7 @@ from collections import deque
 from customer import Customer
 from haircut import Haircut
 from order import Order
+from customer_generator import CustomerGenerator
 import random
 from barber import Barber
 from threading import Lock
@@ -16,10 +17,8 @@ def add_order(order):
         order_queue.appendleft(order)
 
 def show_order(order_deque):
-    """
-    Visualize orders in the console using ASCII bars.
-    """
-    SCALE = 1  # 1 minute = 1 '#'. Adjust if bars get too long.
+
+    SCALE = 1
 
     if order_deque:
         for order in order_deque:
@@ -31,7 +30,8 @@ def show_order(order_deque):
     print()
 
 
-customers = [Customer(name) for name in ["Alice", "Bob", "Charlie", "Diana", "Ethan"]]
+customer_gen = CustomerGenerator()
+customers = customer_gen.generate_customers(5)
 
 for cust in customers:
     haircut = random.choice(list(Haircut))
