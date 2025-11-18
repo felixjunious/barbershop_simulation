@@ -1,23 +1,23 @@
 from collections import deque
-from customer import Customer
-from haircut import Haircut
-from order import Order
-from customer_generator import CustomerGenerator
-import random
-from barber import Barber
 from threading import Lock
+
+from order_generator import OrderGenerator
+from barber import Barber
+
 
 TIME_DESCALE = 4
 
+
 order_queue = deque()
 queue_lock = Lock()
+
 
 def add_order(order):
     with queue_lock:
         order_queue.appendleft(order)
 
-def show_order(order_deque):
 
+def show_order(order_deque):
     SCALE = 1
 
     if order_deque:
@@ -26,26 +26,33 @@ def show_order(order_deque):
             print(f"{order.customer.name:10} | {order.haircut:12} | {bar} ({order.duration}m)")
     else:
         print("Queue Empty")
-
     print()
 
 
-customer_gen = CustomerGenerator()
-customers = customer_gen.generate_customers(5)
 
-for cust in customers:
-    haircut = random.choice(list(Haircut))
-    order = Order(cust, haircut)
+order_gen = OrderGenerator()
+orders = order_gen.generate_orders(5)
+
+for order in orders:
     add_order(order)
 
-print("Initial order :")
+print("Initial Orders:")
 show_order(order_queue)
 
-barbers = [Barber(name, order_queue, queue_lock) for name in ["Barber-1", "Barber-2"]]  # e.g., 2 barbers
-for b in barbers:
-    b.start()
 
-for b in barbers:
-    b.join()
 
+barbers = [
+    Barber("Barber-1", order_queue, queue_lock),
+    Barber("Barber-2", order_queue, queue_lock)
+]
+
+for barber in barbers:
+    barber.start()
+
+for barber in barbers:
+    barber.join()
+
+
+
+print("Final Queue:")
 show_order(order_queue)
