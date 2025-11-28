@@ -3,10 +3,11 @@ import random
 class Order:
     TIME_VARIANCE = 0.2
 
-    def __init__(self, customer, haircut):
+    def __init__(self, customer, haircut, arrival_time=None):
         self.customer = customer
         self.haircut = haircut
         self.duration = Order.random_duration(haircut)
+        self.arrival_time = arrival_time
 
     @staticmethod
     def random_duration(haircut):

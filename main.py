@@ -4,7 +4,9 @@ from threading import Lock
 from order_generator import OrderGenerator
 from barber import Barber
 from config import *
+from stats_tracker import StatsTracker
 from time_manager import TimeManager
+
 
 def add_order(order, queue, lock):
     with lock:
@@ -13,7 +15,6 @@ def add_order(order, queue, lock):
 
 def show_order(order_deque):
     scale = 1
-
     if order_deque:
         for order in order_deque:
             bar = "#" * int(order.duration * scale)
@@ -43,43 +44,63 @@ def display_state(barbers, order_queue):
         print("Empty")
 
 
-def handle_customer_arrival(order_gen, order_queue, queue_lock):
+def handle_customer_arrival(order_gen, order_queue, queue_lock, stats_tracker, current_time):
     if random.random() < CUSTOMER_ARRIVAL_RATE:
         new_order = order_gen.generate_order()
+        new_order.arrival_time = current_time  # Track arrival
 
         if len(order_queue) < WAITING_ROOM_SIZE:
             add_order(new_order, order_queue, queue_lock)
-            return f"[+] New Customer: {new_order.customer.name}"
+            stats_tracker.record_new_customer(len(order_queue))
+            return f"[+] New Customer: {new_order.customer.name}", new_order
         else:
-            return "[X] Customer Left (Waiting room full)"
-    return ""
+            stats_tracker.record_customer_lost()
+            return "[X] Customer Left (Waiting room full)", None
+    return "", None
+
 
 def start_barbers(barbers):
     for barber in barbers:
         barber.start()
 
+
 def shutdown_barbers(barbers):
     for barber in barbers:
         barber.stop_working()
-
     for barber in barbers:
         barber.join()
 
+
 def barbers_busy(barbers):
     return any(barber.current_order is not None for barber in barbers)
+
 
 def main():
     order_queue = deque()
     queue_lock = Lock()
     order_gen = OrderGenerator()
     time_manager = TimeManager()
+    stats_tracker = StatsTracker()
 
-    barbers = Barber.generate_barbers(order_queue, queue_lock)
+    # Create barbers with access to stats and time manager
+    barbers = Barber.generate_barbers(
+        order_queue,
+        queue_lock,
+        stats_tracker=stats_tracker,
+        time_manager=time_manager
+    )
+
     start_barbers(barbers)
 
     while time_manager.check_time() or order_queue or barbers_busy(barbers):
         if time_manager.check_time():
-            new_customer_msg = handle_customer_arrival(order_gen, order_queue, queue_lock)
+            new_customer_msg, _ = handle_customer_arrival(
+                order_gen,
+                order_queue,
+                queue_lock,
+                stats_tracker,
+                time_manager.current
+            )
         else:
             new_customer_msg = ""
 
@@ -91,6 +112,10 @@ def main():
     shutdown_barbers(barbers)
     display_state(barbers, order_queue)
     print(f"Current Time: {time_manager.formatted()} | ")
+
+    # Print final simulation stats
+    stats_tracker.print_summary()
+
 
 if __name__ == "__main__":
     main()
