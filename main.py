@@ -1,11 +1,11 @@
 import random
 from collections import deque
 from threading import Lock
-from order_generator import OrderGenerator
-from barber import Barber
+from generator.order_generator import OrderGenerator
+from models.barber import Barber
 from config import *
-from stats_tracker import StatsTracker
-from time_manager import TimeManager
+from utils.stats_tracker import StatsTracker
+from utils.time_manager import TimeManager
 
 
 def add_order(order, queue, lock):
