@@ -1,6 +1,4 @@
 import random
-import time
-import os
 from collections import deque
 from threading import Lock
 from order_generator import OrderGenerator
@@ -25,14 +23,7 @@ def show_order(order_deque):
     print()
 
 
-def clear_console():
-    os.system('cls' if os.name == 'nt' else 'clear')
-
-
-
 def display_state(barbers, order_queue):
-    clear_console()
-
     print("\n" * 5)
     print("=== Barbershop Simulation ===")
     print("\nBarbers:")
@@ -74,8 +65,10 @@ def shutdown_barbers(barbers):
     for barber in barbers:
         barber.join()
 
-def main():
+def barbers_busy(barbers):
+    return any(barber.current_order is not None for barber in barbers)
 
+def main():
     order_queue = deque()
     queue_lock = Lock()
     order_gen = OrderGenerator()
@@ -84,7 +77,7 @@ def main():
     barbers = Barber.generate_barbers(order_queue, queue_lock)
     start_barbers(barbers)
 
-    while time_manager.check_time() or order_queue:
+    while time_manager.check_time() or order_queue or barbers_busy(barbers):
         if time_manager.check_time():
             new_customer_msg = handle_customer_arrival(order_gen, order_queue, queue_lock)
         else:
@@ -96,9 +89,8 @@ def main():
         time_manager.tick()
 
     shutdown_barbers(barbers)
-
-    print("\nFinal Queue:")
-    show_order(order_queue)
+    display_state(barbers, order_queue)
+    print(f"Current Time: {time_manager.formatted()} | ")
 
 if __name__ == "__main__":
     main()

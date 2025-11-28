@@ -23,9 +23,9 @@ class Barber(Thread):
         return True
 
     def process_order(self, order):
-        #print(f"{self.name} Serving {order.customer.name} ({order.haircut.name}, {order.duration} min)")
+        print(f"{self.name} Serving {order.customer.name} ({order.haircut.name}, {order.duration} min)")
         sleep(order.duration / TIME_DESCALE)
-        #print(f"{self.name} Finished {order.customer.name}")
+        print(f"{self.name} Finished {order.customer.name}")
 
     def start_working(self):
         self.working = True
