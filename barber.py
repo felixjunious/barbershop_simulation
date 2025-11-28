@@ -1,30 +1,42 @@
 from threading import Thread
 from time import sleep
-
-TIME_DESCALE = 4
+from config import TIME_DESCALE
 
 class Barber(Thread):
-    def __init__(self,name, order_queue, lock):
+    def __init__(self,name, order_queue, lock, working=False):
         super().__init__()
         self.name = name
         self.order_queue = order_queue
         self.lock = lock
+        self.working = working
+        self.current_order = None
 
     def serve_order(self):
         with self.lock:
             if not self.order_queue:
+                self.current_order = None
                 return False
             order = self.order_queue.pop()
+            self.current_order = order
         self.process_order(order)
+        self.current_order = None
         return True
 
     def process_order(self, order):
-        print(f"{self.name } Serving {order.customer} ({order.haircut.name}, {order.duration} min)")
+        #print(f"{self.name} Serving {order.customer.name} ({order.haircut.name}, {order.duration} min)")
         sleep(order.duration / TIME_DESCALE)
-        print(f"{self.name } Finished {order.customer}")
+        #print(f"{self.name} Finished {order.customer.name}")
+
+    def start_working(self):
+        self.working = True
+
+    def stop_working(self):
+        self.working = False
 
     def run(self):
-        while True:
+        self.start_working()
+
+        while self.working or self.order_queue:
             served = self.serve_order()
             if not served:
-                break
+                sleep(0.1)

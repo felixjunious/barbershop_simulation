@@ -8,13 +8,12 @@ class OrderGenerator:
     def __init__(self):
         self.customer_gen = CustomerGenerator()
 
+    def generate_order(self):
+        """Generate exactly one order."""
+        customer = self.customer_gen.generate_customer()
+        haircut = random.choice(list(Haircut))
+        return Order(customer, haircut)
+
     def generate_orders(self, count):
-        customers = self.customer_gen.generate_customers(count)
-        orders = []
-
-        for cust in customers:
-            haircut = random.choice(list(Haircut))
-            order = Order(cust, haircut)
-            orders.append(order)
-
-        return orders
+        """Generate a list of orders by calling generate_order repeatedly."""
+        return [self.generate_order() for _ in range(count)]
