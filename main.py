@@ -6,12 +6,7 @@ from threading import Lock
 from order_generator import OrderGenerator
 from barber import Barber
 from config import *
-
-#Simulation Settings
-SIMULATION_TIME = 60
-CUSTOMER_ARRIVAL_RATE = 0.8
-WAITING_ROOM_SIZE = 5
-TIME_DESCALE = 0.25
+from time_manager import TimeManager
 
 def add_order(order, queue, lock):
     with lock:
@@ -32,6 +27,7 @@ def show_order(order_deque):
 
 def clear_console():
     os.system('cls' if os.name == 'nt' else 'clear')
+
 
 
 def display_state(barbers, order_queue):
@@ -56,46 +52,52 @@ def display_state(barbers, order_queue):
         print("Empty")
 
 
-def main():
+def handle_customer_arrival(order_gen, order_queue, queue_lock):
+    if random.random() < CUSTOMER_ARRIVAL_RATE:
+        new_order = order_gen.generate_order()
 
-    order_queue = deque()
-    queue_lock = Lock()
-    order_gen = OrderGenerator()
+        if len(order_queue) < WAITING_ROOM_SIZE:
+            add_order(new_order, order_queue, queue_lock)
+            return f"[+] New Customer: {new_order.customer.name}"
+        else:
+            return "[X] Customer Left (Waiting room full)"
+    return ""
 
-    barbers = [
-        Barber("Barber-1", order_queue, queue_lock),
-        Barber("Barber-2", order_queue, queue_lock)
-    ]
-
+def start_barbers(barbers):
     for barber in barbers:
         barber.start()
 
-    current_time = 0
-    while current_time < SIMULATION_TIME:
-        new_customer_msg = ""
-
-        if random.random() < CUSTOMER_ARRIVAL_RATE:
-            new_order = order_gen.generate_order()
-
-            if len(order_queue) < WAITING_ROOM_SIZE:
-                add_order(new_order, order_queue, queue_lock)
-                new_customer_msg = f"[+] New Customer: {new_order.customer.name}"
-            else:
-                new_customer_msg = "[X] Customer Left (Waiting room full)"
-
-        display_state(barbers, order_queue)
-        print(f"Current Time: {current_time} min | {new_customer_msg}")
-
-        time.sleep(1 / TIME_DESCALE)
-        current_time += 1
-
+def shutdown_barbers(barbers):
     for barber in barbers:
         barber.stop_working()
 
     for barber in barbers:
         barber.join()
 
-    print("Final Queue:")
+def main():
+
+    order_queue = deque()
+    queue_lock = Lock()
+    order_gen = OrderGenerator()
+    time_manager = TimeManager()
+
+    barbers = Barber.generate_barbers(order_queue, queue_lock)
+    start_barbers(barbers)
+
+    while time_manager.check_time() or order_queue:
+        if time_manager.check_time():
+            new_customer_msg = handle_customer_arrival(order_gen, order_queue, queue_lock)
+        else:
+            new_customer_msg = ""
+
+        display_state(barbers, order_queue)
+        print(f"Current Time: {time_manager.formatted()} | {new_customer_msg}")
+
+        time_manager.tick()
+
+    shutdown_barbers(barbers)
+
+    print("\nFinal Queue:")
     show_order(order_queue)
 
 if __name__ == "__main__":

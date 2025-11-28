@@ -1,6 +1,6 @@
 from threading import Thread
 from time import sleep
-from config import TIME_DESCALE
+from config import TIME_DESCALE, NUM_BARBERS
 
 class Barber(Thread):
     def __init__(self,name, order_queue, lock, working=False):
@@ -32,6 +32,10 @@ class Barber(Thread):
 
     def stop_working(self):
         self.working = False
+
+    @staticmethod
+    def generate_barbers(order_queue, queue_lock, num_of_barbers=NUM_BARBERS):
+        return [Barber(f"Barber-{i+1}", order_queue, queue_lock) for i in range(num_of_barbers)]
 
     def run(self):
         self.start_working()
