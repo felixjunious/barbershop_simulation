@@ -2,13 +2,7 @@
 
 # 💈 Barbershop Simulation
 
-This project simulates the daily activity inside a barbershop.  
-Customers arrive over time, wait in a queue if the barbers are busy,  
-or leave if the shop is full. Each barber works independently with  
-different haircut types and durations. The simulation tracks wait times,  
-revenue, wages, idle time, and overall shop efficiency. Time is scaled,  
-so an hour-long scenario can play out in just a few moments, making it  
-easy to observe how different shop setups perform.
+This project simulates the daily activity inside a barbershop. Customers arrive over time, wait in a queue if the barbers are busy, or leave if the shop is full. Each barber works independently with different haircut types and durations. The simulation tracks wait times, revenue, wages, idle time, and overall shop efficiency. Time is scaled, so an hour-long scenario can play out in just a few moments, making it easy to observe how different shop setups perform.
 
 ![Barbershop Simulation Overview](barbershop_simulation_overview.png)
 
